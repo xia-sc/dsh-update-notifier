@@ -1,0 +1,6 @@
+# dsh-update-notifier — host + client bundle layer.
+# Applied after dsh-web-app, so the `connection` service is available.
+# Host half mounts /dsh-update-rpc for version checks; client half renders a banner.
+- insert:
+    - id: update-notifier
+      name: dsh-update-notifier
