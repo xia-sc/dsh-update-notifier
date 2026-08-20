@@ -34,10 +34,5 @@ dsh plugin --profile web add https://github.com/xia-sc/dsh-update-notifier
 ```powershell
 dsh --profile web --dump-config  # 应含 update-notifier
 # 浏览器 GET http://127.0.0.1:3080/plugins/dsh-update-notifier/client.js 200
-# RPC: POST /dsh-update-rpc/getStatus  {"type":"client-request","rpcId":"1","method":"call","payload":{"args":{}}}
+# RPC: POST /dsh-update-rpc/getStatus  {"type":"client-request","rpcId":"1","method":"getStatus","payload":{"args":{}}}
 ```
-
-## 调试
-
-- 模拟有更新：临时在 `lib/index.js` 将 `current` 改为 `0.0.0`，刷新页面应见横幅
-- 清除 dismiss：`localStorage.removeItem("dsh-update-notifier:dismissed:<版本>")`
