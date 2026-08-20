@@ -25,7 +25,7 @@ dsh-update-notifier/
 ## 安装
 
 ```powershell
-dsh plugin --profile web add E:/dsh/plugin/dsh-update-notifier
+dsh plugin --profile web add https://github.com/xia-sc/dsh-update-notifier
 # 重启 dsh web 生效
 ```
 
