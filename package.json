@@ -1,6 +1,6 @@
 {
   "name": "dsh-update-notifier",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Detect available DSH updates at startup: checks npm registry for newer @deepseek-ai/dsh and shows a dismissible banner in Web GUI.",
   "type": "module",
   "main": "lib/index.js",
