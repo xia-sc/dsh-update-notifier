@@ -271,17 +271,21 @@ function createHost({ clock, doneAt = HOST_CHECK_DONE_AT, never = false, log }) 
   }
   return {
     rpc: {
-      call(_channel, endpoint) {
-        log.push({ endpoint, at: clock.now() });
-        if (endpoint === "getStatus") return Promise.resolve({ ok: true, value: completed ? COMPLETED : MID_CHECK });
-        if (endpoint === "checkNow") {
+      call(channel, endpoint) {
+        // Record both; the protocol pin for the CURRENT bundle lives after the
+        // scenarios so `--expect-*` can still drive pre-migration bundles, which
+        // addressed a different channel.
+        const name = String(endpoint).split("/").pop();
+        log.push({ channel, endpoint, name, at: clock.now() });
+        if (name === "getStatus") return Promise.resolve({ ok: true, value: completed ? COMPLETED : MID_CHECK });
+        if (name === "checkNow") {
           if (completed) return Promise.resolve({ ok: true, value: COMPLETED });
           if (never) return new Promise(() => {});
           return new Promise((res) => {
             clock.setTimeout(() => res({ ok: true, value: COMPLETED }), Math.max(0, doneAt - clock.now()));
           });
         }
-        return Promise.resolve({ ok: false, error: { code: "internal", message: "unknown", details: {} } });
+        return Promise.resolve({ ok: false, error: { code: "gateway/bad-request", message: "unknown", details: {} } });
       },
     },
   };
@@ -362,7 +366,7 @@ if (expectStuck) {
   assert.notEqual(last, "banner-loading", "banner never recovered from the loading card");
   assert.equal(last, "banner-uptodate", "expected the recovered banner to show the up-to-date card");
   assert.ok(
-    stuckRun.calls.some((c) => c.endpoint === "checkNow"),
+    stuckRun.calls.some((c) => c.name === "checkNow"),
     "expected a checkNow retry to be issued"
   );
   console.log("OK: recovered from loading → banner-uptodate\n");
@@ -383,9 +387,20 @@ if (!expectStuck) {
   }
   assert.equal(fastRun.timeline[1].state, "banner-uptodate", "a completed host snapshot must render immediately");
   assert.equal(
-    fastRun.calls.filter((c) => c.endpoint === "checkNow").length,
+    fastRun.calls.filter((c) => c.name === "checkNow").length,
     0,
     "a completed snapshot must not trigger retries"
   );
   console.log("OK: completed snapshot renders immediately, no extra checkNow");
+
+  // Protocol pin for the CURRENT bundle only: the client half must address the
+  // shared /api channel with its own endpoint namespace. (`--expect-stuck` runs
+  // pre-migration bundles that used a different channel, so it is exempt.)
+  const allCalls = [...stuckRun.calls, ...deadRun.calls, ...fastRun.calls];
+  assert.ok(allCalls.length > 0, "expected the client half to issue at least one rpc call");
+  for (const call of allCalls) {
+    assert.equal(call.channel, "/api", `client half called channel ${JSON.stringify(call.channel)}`);
+    assert.equal(call.endpoint, `dsh-update-rpc/${call.name}`, `client half called endpoint ${JSON.stringify(call.endpoint)}`);
+  }
+  console.log("OK: client half addresses /api with the dsh-update-rpc namespace");
 }

@@ -1,11 +1,11 @@
 {
   "name": "dsh-update-notifier",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Detect available DSH updates at startup: checks npm registry for newer @deepseek-ai/dsh and shows a dismissible banner in Web GUI.",
   "type": "module",
   "main": "lib/index.js",
   "scripts": {
-    "test": "node test/loading-recovery.mjs && node test/host-getstatus.mjs"
+    "test": "node test/loading-recovery.mjs && node test/host-getstatus.mjs && node test/rpc-bridge.mjs"
   },
   "exports": {
     ".": "./lib/index.js",
@@ -25,8 +25,11 @@
     "client": {
       "platform": "web",
       "inject": [
+        "@deepseek-ai/dsh-client-connection",
         "@deepseek-ai/dsh-client-locale",
-        "@deepseek-ai/dsh-client-ui-layout"
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-renderer"
       ]
     }
   },

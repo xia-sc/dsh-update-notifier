@@ -48,6 +48,10 @@ npm test
   加 `--expect-stuck` 可对旧版本 bundle 断言“卡在加载态”，用于证明用例真能复现问题。
 - `test/host-getstatus.mjs`：用 stub `fetch`（1.5s 延迟）启动真实的 `lib/index.js`，在自检进行中调用
   `getStatus`，断言返回的是完整快照而不是 `{checkedAt:null, checking:true}`。
+- `test/rpc-bridge.mjs`：直接驱动真实的 `/api/dsh-update-rpc/*` 精确 Fetch 路由，断言路由清单（三条、仅 POST、
+  `requestBody: buffered`）、`client-request` 信封契约（回显 `rpcId`、`method` 必须等于 endpoint）、
+  错误码走 gateway 分类，以及宿主缺少该 seam 时保持惰性而不是抛错。
+  传一个迁移前的 `index.js` 路径即可看到协议差异。详见 `AUDIT-dsh-0.1.7-alpha.1.md`。
 
 ## 安装
 
@@ -60,6 +64,10 @@ dsh plugin --profile web add https://github.com/xia-sc/dsh-update-notifier
 
 ```powershell
 dsh --profile web --dump-config  # 应含 update-notifier
-# 浏览器 GET http://127.0.0.1:3080/plugins/dsh-update-notifier/client.js 200
-# RPC: POST /dsh-update-rpc/getStatus  {"type":"client-request","rpcId":"1","method":"getStatus","payload":{"args":{}}}
+# 浏览器半（DSH 0.1.7+ 只有 combo 形式；rev 是 bundle 文件 mtimeMs/ctimeMs/size 的哈希前 12 位）：
+#   GET http://127.0.0.1:3080/plugins/??dsh-update-notifier/client.js&rev=<rev>   200
+# 裸 /plugins/dsh-update-notifier/client.js 在 0.1.7 上必然 404
+# RPC（0.5.0 起挂在 /api 之下）：POST /api/dsh-update-rpc/getStatus
+#   {"type":"client-request","rpcId":"1","method":"dsh-update-rpc/getStatus","payload":{"args":{}}}
+#   method 是 /api 之下那段路径（不是裸 getStatus）；无 token 会 401，不存在的路径是 404
 ```
